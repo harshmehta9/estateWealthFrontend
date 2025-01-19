@@ -4,6 +4,7 @@ import Layout from "../components/Layout";
 import PropertyFilters from "../components/properties/PropertyFilters";
 import PropertyCard from "../components/properties/PropertyCard";
 import { Phone, Check } from "lucide-react";
+const backendUrl = import.meta.env.BASE_URL;
 
 
 const filterProperties = (properties, filters) => {
@@ -155,7 +156,7 @@ const PropertiesPage: React.FC = () => {
       try {
         setIsLoading(true);
         const response = await fetch(
-          "http://localhost:3000/properties/getAllProperties"
+          `${import.meta.env.VITE_API_URL}/properties/getAllProperties`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch properties");

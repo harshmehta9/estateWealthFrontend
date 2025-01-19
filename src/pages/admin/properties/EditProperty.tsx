@@ -17,7 +17,7 @@ const EditProperty: React.FC = () => {
         
         const fetchProperty = async () => {
             try {
-                const response = await axios.get<{ property: Property }>(`http://localhost:3000/properties/getProperty/${id}`);
+                const response = await axios.get<{ property: Property }>(`${import.meta.env.VITE_API_URL}/properties/getProperty/${id}`);
                 setFormData(response.data.property);
             } catch (err) {
                 setError('Failed to fetch property details');
@@ -84,7 +84,7 @@ const EditProperty: React.FC = () => {
     setLoading(true);
     try {
         setLoading(true);
-      const response = await axios.put(`http://localhost:3000/admin/editProperty/${id}`, formData);
+      const response = await axios.put(`${import.meta.env.VITE_API_URL}/admin/editProperty/${id}`, formData);
       if (response.status === 200) {
         setLoading(false);
         setSuccess(true);

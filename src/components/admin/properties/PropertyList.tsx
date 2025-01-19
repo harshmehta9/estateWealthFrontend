@@ -2,7 +2,6 @@
 import { Edit, Trash2, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-
 interface Property {
   _id: string;
   name: string;
@@ -102,7 +101,7 @@ export default function PropertyList({ properties }: PropertyListProps) {
                       onClick={async () => {
                         if (window.confirm('Are you sure you want to delete this property?')) {
                           try {
-                            const response = await fetch(`http://localhost:3000/admin/deleteproperty/${property._id}`, {
+                            const response = await fetch(`http://0/admin/deleteproperty/${property._id}`, {
                               method: 'DELETE',
                             });
                             if (response.ok) {

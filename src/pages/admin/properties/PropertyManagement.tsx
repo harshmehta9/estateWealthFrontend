@@ -45,7 +45,7 @@ export default function PropertyManagement() {
 
   useEffect(() => {
     // Fetch data from the backend
-    axios.get('http://localhost:3000/properties/getAllProperties')
+    axios.get(`${import.meta.env.VITE_API_URL}/properties/getAllProperties`)
       .then(response => {
         console.dir('Fetched properties:', response.data.properties);
         setProperties(response.data.properties);

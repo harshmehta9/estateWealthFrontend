@@ -9,9 +9,19 @@ import PropertyManagement from './pages/admin/properties/PropertyManagement';
 import NewProperty from './pages/admin/properties/NewProperty';
 import EditProperty from './pages/admin/properties/EditProperty';
 import PropertiesPage from './pages/PropertiesPage';
+import axios from 'axios';
 
 
 function App() {
+  console.log(import.meta.env.VITE_API_URL); 
+
+  async function testURL() {
+    let result = await axios.get(`${import.meta.env.VITE_API_URL}`)
+    console.log(result);
+  }
+
+  testURL();
+
   return (
     <Router>
       <Routes>

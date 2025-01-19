@@ -123,7 +123,7 @@ export default function NewProperty() {
   }));
 
   try {
-    const response = await fetch('http://localhost:3000/admin/createproperty', {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/createproperty`, {
       method: 'POST',
       body: formDataToSend
     });
