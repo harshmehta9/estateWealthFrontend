@@ -1,752 +1,1257 @@
-import React, { useState, ChangeEvent } from 'react';
-import { Plus, Minus, Upload, X } from 'lucide-react';
-
-interface FormData {
-  name: string;
-  priceRange: Array<{ bhk: string; price: number }>;
-  location: {
-    address: string;
+export interface PropertyForm {
+  configuration: {
+    bhkType: string;
+    area: { value: number | null; unit: string }; // Changed to number | null
+    price: { value: number | null; unit: string };
+    bookingAmount: { value: number | null; unit: string };
+    parking: string;
     googleMapLink: string;
-    locality: string;
+    aboutProperty: string;
+    aboutBuilder: string;
   };
-  images: File[];
-  imageUrls: string[]; // For preview
-  landParcel: number;
-  towers: number;
-  configurations: Array<{ bhk: string; carpetArea: number }>;
-  reraNumbers: string[];
-  possession: {
-    target: string;
-    reraPossession: string;
+  propertyDetails: {
+    landParcel: { value: number | null; unit: string };
+    totalTowers: number | null;
+    buildingStructures: string;
+    availableTowers: number | null;
   };
-  about: string;
+  possession: any;
   prosAndCons: {
     pros: string[];
     cons: string[];
   };
-  videoLink: string;
-  internalAmenities: string[];
-  externalAmenities: string[];
-  masterPlanImage: File | null;
-  floorPlanImage: File | null;
-  pricingDetails: Array<{
-    carpetArea: number;
-    totalPrice: number;
-    downPayment: number;
-    parking: number;
-    unitPlanImage: string;
-  }>;
-  paymentScheme: string;
-  offer: string;
-  faqs: Array<{ question: string; answer: string }>;
+  amenities: {
+    indoor: string[];
+    outdoor: string[];
+    amenityImages: File[];
+  };
+  mediaAndPlans: {
+    videoLinks: string[];
+    projectLayoutsImage: File[];
+    floorLayoutsImage: File[];
+    unitPlanLayoutsImage: File[];
+  };
+  location: string;
+  paymentAndOffers: {
+    offerText: string;
+    offerImages: File[];
+  };
+  specifications: {
+    specificationImages: File[];
+  };
+  propertyImages: File[];
 }
 
+import { useState } from 'react';
+
 export default function NewProperty() {
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    priceRange: [{ bhk: '', price: 0 }],
-    location: { address: '', googleMapLink: '', locality: '' },
-    images: [],
-    imageUrls: [],
-    landParcel: 0,
-    towers: 0,
-    configurations: [{ bhk: '', carpetArea: 0 }],
-    reraNumbers: [''],
-    possession: { target: '', reraPossession: '' },
-    about: '',
-    prosAndCons: { pros: [''], cons: [''] },
-    videoLink: '',
-    internalAmenities: [''],
-    externalAmenities: [''],
-    masterPlanImage: null,
-    floorPlanImage: null,
-    pricingDetails: [{
-      carpetArea: 0,
-      totalPrice: 0,
-      downPayment: 0,
-      parking: 0,
-      unitPlanImage: ''
-    }],
-    paymentScheme: '',
-    offer: '',
-    faqs: [{ question: '', answer: '' }]
+  const [newPro, setNewPro] = useState('');
+  const [newCon, setNewCon] = useState('');
+  const [newIndoorAmenity, setNewIndoorAmenity] = useState('');
+  const [newOutdoorAmenity, setNewOutdoorAmenity] = useState('');
+  const [newVideoLink, setNewVideoLink] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+const [submitError, setSubmitError] = useState('');
+const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const [formData, setFormData] = useState<PropertyForm>({
+    configuration: {
+      bhkType: '',
+      area: { value: null, unit: 'sq ft' }, // Initialize with null
+      price: { value: null, unit: 'Cr' },
+      bookingAmount: { value: null, unit: 'Lac' },
+      parking: '',
+      googleMapLink: '',
+      aboutProperty: '',
+      aboutBuilder: ''
+    },
+    propertyDetails: {
+      landParcel: { value: null, unit: 'Acres' },
+      totalTowers: null,
+      buildingStructures: '',
+      availableTowers: null
+    },
+    possession: null,
+    prosAndCons: {
+      pros: [],
+      cons: []
+    },
+    amenities: {
+      indoor: [],
+      outdoor: [],
+      amenityImages: []
+    },
+    mediaAndPlans: {
+      videoLinks: [],
+      projectLayoutsImage: [],
+      floorLayoutsImage: [],
+      unitPlanLayoutsImage: []
+    },
+    location: '',
+    paymentAndOffers: {
+      offerText: '',
+      offerImages: []
+    },
+    specifications: {
+      specificationImages: []
+    },
+    propertyImages: []
   });
 
-  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const newImages = Array.from(files);
-      const newImageUrls = newImages.map(file => URL.createObjectURL(file));
-      
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...newImages],
-        imageUrls: [...prev.imageUrls, ...newImageUrls]
-      }));
-    }
-  };
+    
+
 
   const removeImage = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-      imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+      propertyImages: prev.propertyImages.filter((_, i) => i !== index)
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
-  const formDataToSend = new FormData();
-  
-  // Append images
-  formData.images.forEach((image: File) => {
-    formDataToSend.append('images', image);
-  });
-  
-  // Append master plan image
-  if (formData.masterPlanImage) {
-    formDataToSend.append('masterPlanImage', formData.masterPlanImage);
-  }
-  
-  // Append floor plan image
-  if (formData.floorPlanImage) {
-    formDataToSend.append('floorPlanImage', formData.floorPlanImage);
-  }
-  
-  // Append the rest of the form data as JSON
-  formDataToSend.append('data', JSON.stringify({
-    ...formData,
-    images: undefined, // Remove images from JSON data
-    masterPlanImage: undefined,
-    floorPlanImage: undefined
-  }));
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files) {
+        setFormData(prev => ({
+          ...prev,
+          propertyImages: [...prev.propertyImages, ...Array.from(files)]
+        }));
+      }
+    };
 
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/createproperty`, {
-      method: 'POST',
-      body: formDataToSend
-    });
-    
-    console.log(response)
-    if (response.ok) {
-      // Handle success
-    }
-  } catch (error) {
-    // Handle error
+    const handlePropertyDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      if (name.includes('landParcel')) {
+        const [_, field] = name.split('.');
+        setFormData(prev => ({
+          ...prev,
+          propertyDetails: {
+            ...prev.propertyDetails,
+            landParcel: {
+              ...prev.propertyDetails.landParcel,
+              [field]: field === 'value' ? parseFloat(value) || 0 : value
+            }
+          }
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          propertyDetails: {
+            ...prev.propertyDetails,
+            [name]: name === 'buildingStructures' ? value : parseFloat(value) || 0
+          }
+        }));
+      }
+    };
+
+  const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const { name, value } = e.target;
+  if (name.includes('.')) {
+    const [parent, child] = name.split('.');
+    setFormData(prev => ({
+      ...prev,
+      configuration: {
+        ...prev.configuration,
+        [parent]: {
+          ...prev.configuration[parent as keyof typeof prev.configuration],
+          [child]: child === 'value' 
+            ? (value === '' ? undefined : Number(value)) // Set undefined if empty
+            : value
+        }
+      }
+    }));
+  } else {
+    setFormData(prev => ({
+      ...prev,
+      configuration: {
+        ...prev.configuration,
+        [name]: value
+      }
+    }));
   }
+};
+  const handleAddPro = () => {
+    if (newPro.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        prosAndCons: {
+          ...prev.prosAndCons,
+          pros: [...prev.prosAndCons.pros, newPro.trim()]
+        }
+      }));
+      setNewPro('');
+    }
+  };
+  
+  const handleAddCon = () => {
+    if (newCon.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        prosAndCons: {
+          ...prev.prosAndCons,
+          cons: [...prev.prosAndCons.cons, newCon.trim()]
+        }
+      }));
+      setNewCon('');
+    }
+  };
+  
+  const handleRemovePro = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      prosAndCons: {
+        ...prev.prosAndCons,
+        pros: prev.prosAndCons.pros.filter((_, i) => i !== index)
+      }
+    }));
+  };
+  
+  const handleRemoveCon = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      prosAndCons: {
+        ...prev.prosAndCons,
+        cons: prev.prosAndCons.cons.filter((_, i) => i !== index)
+      }
+    }));
   };
 
+  const handleAddIndoorAmenity = () => {
+    if (newIndoorAmenity.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        amenities: {
+          ...prev.amenities,
+          indoor: [...prev.amenities.indoor, newIndoorAmenity.trim()]
+        }
+      }));
+      setNewIndoorAmenity('');
+    }
+  };
+  
+  const handleRemoveIndoorAmenity = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      amenities: {
+        ...prev.amenities,
+        indoor: prev.amenities.indoor.filter((_, i) => i !== index)
+      }
+    }));
+  };
+  
+  const handleAddOutdoorAmenity = () => {
+    if (newOutdoorAmenity.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        amenities: {
+          ...prev.amenities,
+          outdoor: [...prev.amenities.outdoor, newOutdoorAmenity.trim()]
+        }
+      }));
+      setNewOutdoorAmenity('');
+    }
+  };
+  
+  const handleRemoveOutdoorAmenity = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      amenities: {
+        ...prev.amenities,
+        outdoor: prev.amenities.outdoor.filter((_, i) => i !== index)
+      }
+    }));
+  };
+  
+  const handleAmenityImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      setFormData(prev => ({
+        ...prev,
+        amenities: {
+          ...prev.amenities,
+          amenityImages: [...prev.amenities.amenityImages, ...Array.from(files)]
+        }
+      }));
+    }
+  };
+  
+  const handleRemoveAmenityImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      amenities: {
+        ...prev.amenities,
+        amenityImages: prev.amenities.amenityImages.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const handleAddVideoLink = () => {
+    if (newVideoLink.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        mediaAndPlans: {
+          ...prev.mediaAndPlans,
+          videoLinks: [...prev.mediaAndPlans.videoLinks, newVideoLink.trim()]
+        }
+      }));
+      setNewVideoLink('');
+    }
+  };
+  
+  const handleRemoveVideoLink = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      mediaAndPlans: {
+        ...prev.mediaAndPlans,
+        videoLinks: prev.mediaAndPlans.videoLinks.filter((_, i) => i !== index)
+      }
+    }));
+  };
+  
+  const handleProjectLayoutUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      setFormData(prev => ({
+        ...prev,
+        mediaAndPlans: {
+          ...prev.mediaAndPlans,
+          projectLayoutsImage: [...prev.mediaAndPlans.projectLayoutsImage, ...Array.from(files)]
+        }
+      }));
+    }
+  };
+  
+  const handleFloorLayoutUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      setFormData(prev => ({
+        ...prev,
+        mediaAndPlans: {
+          ...prev.mediaAndPlans,
+          floorLayoutsImage: [...prev.mediaAndPlans.floorLayoutsImage, ...Array.from(files)]
+        }
+      }));
+    }
+  };
+  
+  const handleUnitPlanLayoutUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      setFormData(prev => ({
+        ...prev,
+        mediaAndPlans: {
+          ...prev.mediaAndPlans,
+          unitPlanLayoutsImage: [...prev.mediaAndPlans.unitPlanLayoutsImage, ...Array.from(files)]
+        }
+      }));
+    }
+  };
+  
+  const handleRemoveProjectLayout = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      mediaAndPlans: {
+        ...prev.mediaAndPlans,
+        projectLayoutsImage: prev.mediaAndPlans.projectLayoutsImage.filter((_, i) => i !== index)
+      }
+    }));
+  };
+  
+  const handleRemoveFloorLayout = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      mediaAndPlans: {
+        ...prev.mediaAndPlans,
+        floorLayoutsImage: prev.mediaAndPlans.floorLayoutsImage.filter((_, i) => i !== index)
+      }
+    }));
+  };
+  
+  const handleRemoveUnitPlanLayout = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      mediaAndPlans: {
+        ...prev.mediaAndPlans,
+        unitPlanLayoutsImage: prev.mediaAndPlans.unitPlanLayoutsImage.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  // Add handlers
+const handleLocationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  setFormData(prev => ({
+    ...prev,
+    location: e.target.value
+  }));
+};
+
+const handleOfferTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  setFormData(prev => ({
+    ...prev,
+    paymentAndOffers: {
+      ...prev.paymentAndOffers,
+      offerText: e.target.value
+    }
+  }));
+};
+
+const handleOfferImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files;
+  if (files) {
+    setFormData(prev => ({
+      ...prev,
+      paymentAndOffers: {
+        ...prev.paymentAndOffers,
+        offerImages: [...prev.paymentAndOffers.offerImages, ...Array.from(files)]
+      }
+    }));
+  }
+};
+
+const handleRemoveOfferImage = (index: number) => {
+  setFormData(prev => ({
+    ...prev,
+    paymentAndOffers: {
+      ...prev.paymentAndOffers,
+      offerImages: prev.paymentAndOffers.offerImages.filter((_, i) => i !== index)
+    }
+  }));
+};
+  
+const handleSpecificationImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files;
+  if (files) {
+    setFormData(prev => ({
+      ...prev,
+      specifications: {
+        specificationImages: [...prev.specifications.specificationImages, ...Array.from(files)]
+      }
+    }));
+  }
+};
+
+const handleRemoveSpecificationImage = (index: number) => {
+  setFormData(prev => ({
+    ...prev,
+    specifications: {
+      specificationImages: prev.specifications.specificationImages.filter((_, i) => i !== index)
+    }
+  }));
+};
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setSubmitError('');
+  setSubmitSuccess(false);
+
+  try {
+    const formPayload = new FormData();
+
+    // Append files with exact field names from your route configuration
+    formData.propertyImages.forEach(file => formPayload.append('propertyImages', file));
+    formData.amenities.amenityImages.forEach(file => formPayload.append('amenityImages', file));
+    formData.mediaAndPlans.unitPlanLayoutsImage.forEach(file => formPayload.append('unitPlanLayoutsImage', file));
+    formData.mediaAndPlans.floorLayoutsImage.forEach(file => formPayload.append('floorLayoutsImage', file));
+    formData.mediaAndPlans.projectLayoutsImage.forEach(file => formPayload.append('projectLayoutsImage', file));
+    formData.paymentAndOffers.offerImages.forEach(file => formPayload.append('offerImages', file));
+    formData.specifications.specificationImages.forEach(file => formPayload.append('specificationImages', file));
+
+    // Append JSON data with proper structure
+    formPayload.append('data', JSON.stringify({
+      configuration: formData.configuration,
+      propertyDetails: formData.propertyDetails,
+      possession: formData.possession,
+      prosAndCons: formData.prosAndCons,
+      amenities: {
+        indoor: formData.amenities.indoor,
+        outdoor: formData.amenities.outdoor
+      },
+      mediaAndPlans: {
+        videoLinks: formData.mediaAndPlans.videoLinks
+      },
+      location: formData.location,
+      paymentAndOffers: {
+        offerText: formData.paymentAndOffers.offerText
+      }
+    }));
+
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/createproperty`, {
+      method: 'POST',
+      body: formPayload, // Don't set Content-Type header - browser will handle it
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to create property');
+    }
+
+    setSubmitSuccess(true);
+    // Optional: Reset form after success
+    // setFormData({ ...initialFormState });
+  } catch (error) {
+    console.error('Submission error:', error);
+    setSubmitError(error instanceof Error ? error.message : 'Failed to create property');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+  console.log(formData)
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Add New Property</h1>
+
+    
+    <div className="max-w-4xl mx-auto p-6">
+      <h2 className="text-2xl font-bold mb-6">Add New Property</h2>
+      {/* //Configuration */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 className="text-xl font-semibold mb-4">Configuration</h3>
         
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Details */}
-            <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900">Basic Details</h2>
-            <div className="grid grid-cols-1 gap-4">
-              <input
-              type="text"
-              placeholder="Property Name"
-              className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-              value={formData.name}
-              onChange={e => setFormData({...formData, name: e.target.value})}
-              required
-              />
-              <input
-              type="text"
-              placeholder="Address"
-              className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-              value={formData.location.address}
-              onChange={e => setFormData({...formData, location: {...formData.location, address: e.target.value}})}
-              required
-              />
-              <input
-              type="text"
-              placeholder="Locality"
-              className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-              value={formData.location.locality}
-              onChange={e => setFormData({...formData, location: {...formData.location, locality: e.target.value}})}
-              />
-            </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* BHK Type: */}
+        <div>
+        <label className="block text-sm font-medium text-gray-700">BHK Type</label>
+        <select
+          name="bhkType"
+          value={formData.configuration.bhkType}
+          onChange={handleConfigChange}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+        >
+          <option value="">Select BHK Type</option>
+          {[1, 2, 3, 4, 5].map((num) => (
+            <option key={num} value={`${num} BHK`}>
+              {num} BHK
+            </option>
+          ))}
+        </select>
+        </div>
 
-          {/* Images Upload */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900">Property Images</h2>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+          {/* Area  */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Area</label>
+            <div className="flex gap-2">
               <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="images"
+                type="number"
+                name="area.value"
+                value={formData.configuration.area.value ?? ''}
+                onChange={handleConfigChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
-              <label
-                htmlFor="images"
-                className="flex flex-col items-center justify-center cursor-pointer"
-              >
-                <Upload className="h-12 w-12 text-gray-400" />
-                <span className="mt-2 text-sm text-gray-500">Click to upload multiple images</span>
-              </label>
-            </div>
-
-            {/* Image Preview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {formData.imageUrls.map((url, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={url}
-                    alt={`Property ${index + 1}`}
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
+              <input
+                type="text"
+                name="area.unit"
+                value={formData.configuration.area.unit}
+                onChange={handleConfigChange}
+                className="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
             </div>
           </div>
 
+          {/* Price */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Price</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                name="price.value"
+                value={formData.configuration.price.value ?? ''}
+                onChange={handleConfigChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+              <input
+                type="text"
+                name="price.unit"
+                value={formData.configuration.price.unit}
+                onChange={handleConfigChange}
+                className="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Booking Amount</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                name="bookingAmount.value"
+                value={formData.configuration.bookingAmount.value ?? ''}
+                onChange={handleConfigChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+              <input
+                type="text"
+                name="bookingAmount.unit"
+                value={formData.configuration.bookingAmount.unit}
+                onChange={handleConfigChange}
+                className="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
 
-          {/* Price Range & Configurations */}
-<div className="space-y-4">
-  <h2 className="text-xl font-semibold text-gray-900">Price Range & Configurations</h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Parking</label>
+            <input
+              type="text"
+              name="parking"
+              value={formData.configuration.parking}
+              onChange={handleConfigChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Google Map Link</label>
+            <input
+              type="text"
+              name="googleMapLink"
+              value={formData.configuration.googleMapLink}
+              onChange={handleConfigChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700">About Property</label>
+          <textarea
+            name="aboutProperty"
+            value={formData.configuration.aboutProperty}
+            onChange={handleConfigChange}
+            rows={4}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
+        </div>
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700">About Builder</label>
+          <textarea
+            name="aboutBuilder"
+            value={formData.configuration.aboutBuilder}
+            onChange={handleConfigChange}
+            rows={4}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          />
+        </div>
+      </div>
+
+      {/* Property Image */}
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h3 className="text-xl font-semibold mb-4">Property Images</h3>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700">Upload Images</label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleImageUpload}
+            className="mt-1 block w-full text-sm text-gray-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-md file:border-0
+              file:text-sm file:font-semibold
+              file:bg-indigo-50 file:text-indigo-700
+              hover:file:bg-indigo-100"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {formData.propertyImages.map((image, index) => (
+            <div key={index} className="relative group">
+              <img
+                src={URL.createObjectURL(image)}
+                alt={`Property ${index + 1}`}
+                className="w-full h-32 object-cover rounded-lg"
+              />
+              <button
+                onClick={() => removeImage(index)}
+                className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full 
+                         opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* PropertyDetails  */}
+
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+  <h3 className="text-xl font-semibold mb-4">Property Details</h3>
   
-  {formData.priceRange.map((range, index) => (
-    <div key={index} className="flex space-x-4">
-      <select
-        value={range.bhk}
-        onChange={(e) => {
-          const newPriceRange = [...formData.priceRange];
-          newPriceRange[index].bhk = e.target.value;
-          setFormData({...formData, priceRange: newPriceRange});
-        }}
-        className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-      >
-        <option value="">Select BHK</option>
-        <option value="1 BHK">1 BHK</option>
-        <option value="2 BHK">2 BHK</option>
-        <option value="3 BHK">3 BHK</option>
-        <option value="4 BHK">4 BHK</option>
-      </select>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Land Parcel</label>
+      <div className="flex gap-2">
+        <input
+          type="number"
+          name="landParcel.value"
+          value={formData.propertyDetails.landParcel.value ?? ''}
+          onChange={handlePropertyDetailsChange}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          min="0"
+          step="0.01"
+        />
+        <input
+          type="text"
+          name="landParcel.unit"
+          value={formData.propertyDetails.landParcel.unit ?? ''}
+          onChange={handlePropertyDetailsChange}
+          className="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+        />
+      </div>
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Total Towers</label>
       <input
         type="number"
-        placeholder="Price (in Cr)"
-        value={range.price}
-        onChange={(e) => {
-          const newPriceRange = [...formData.priceRange];
-          newPriceRange[index].price = parseFloat(e.target.value);
-          setFormData({...formData, priceRange: newPriceRange});
-        }}
-        className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
+        name="totalTowers"
+        value={formData.propertyDetails.totalTowers}
+        onChange={handlePropertyDetailsChange}
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+        min="0"
+        step="0.01"
       />
-      <button
-        type="button"
-        onClick={() => {
-          const newPriceRange = formData.priceRange.filter((_, i) => i !== index);
-          setFormData({...formData, priceRange: newPriceRange});
-        }}
-        className="p-2 text-red-600 hover:text-red-800"
-      >
-        <Minus className="h-5 w-5" />
-      </button>
     </div>
-  ))}
-  <button
-    type="button"
-    onClick={() => setFormData({
-      ...formData,
-      priceRange: [...formData.priceRange, { bhk: '', price: 0 }]
-    })}
-    className="flex items-center space-x-2 text-maroon-600 hover:text-maroon-800"
-  >
-    <Plus className="h-5 w-5" />
-    <span>Add Price Range</span>
-  </button>
-</div>
 
-{/* Property Details */}
-<div className="space-y-4">
-  <h2 className="text-xl font-semibold text-gray-900">Property Details</h2>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <input
-      type="number"
-      placeholder="Land Parcel (in acres)"
-      value={formData.landParcel}
-      onChange={(e) => setFormData({...formData, landParcel: e.target.value})}
-      className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-    />
-    <input
-      type="number"
-      placeholder="Number of Towers"
-      value={formData.towers}
-      onChange={(e) => setFormData({...formData, towers: parseInt(e.target.value)})}
-      className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-    />
+    <div className="md:col-span-2">
+      <label className="block text-sm font-medium text-gray-700">Building Structures</label>
+      <textarea
+        name="buildingStructures"
+        value={formData.propertyDetails.buildingStructures}
+        onChange={handlePropertyDetailsChange}
+        rows={3}
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+        placeholder="Describe the building structures..."
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Available Towers</label>
+      <input
+        type="number"
+        name="availableTowers"
+        value={formData.propertyDetails.availableTowers}
+        onChange={handlePropertyDetailsChange}
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+        min="0"
+        step="0.01"
+      />
+    </div>
   </div>
+      </div>
+
+      {/* Pros and Cons  */}
+
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+  <h3 className="text-xl font-semibold mb-4">Pros and Cons</h3>
   
-  {/* RERA Numbers */}
-  <div className="space-y-2">
-    <label className="block text-sm font-medium text-gray-700">RERA Numbers</label>
-    {formData.reraNumbers.map((rera, index) => (
-      <div key={index} className="flex space-x-2">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Pros Section */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Pros</label>
+      <div className="flex gap-2 mb-4">
         <input
           type="text"
-          value={rera}
-          onChange={(e) => {
-            const newRera = [...formData.reraNumbers];
-            newRera[index] = e.target.value;
-            setFormData({...formData, reraNumbers: newRera});
-          }}
-          className="flex-1 border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
+          value={newPro}
+          onChange={(e) => setNewPro(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Add a pro"
         />
         <button
-          type="button"
-          onClick={() => {
-            const newRera = formData.reraNumbers.filter((_, i) => i !== index);
-            setFormData({...formData, reraNumbers: newRera});
-          }}
-          className="p-2 text-red-600 hover:text-red-800"
+          onClick={handleAddPro}
+          className="mt-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
         >
-          <Minus className="h-5 w-5" />
+          Add
         </button>
       </div>
-    ))}
-    <button
-      type="button"
-      onClick={() => setFormData({...formData, reraNumbers: [...formData.reraNumbers, '']})}
-      className="flex items-center space-x-2 text-maroon-600 hover:text-maroon-800"
-    >
-      <Plus className="h-5 w-5" />
-      <span>Add RERA Number</span>
-    </button>
-  </div>
-</div>
-
-{/* Possession & About */}
-<div className="space-y-4">
-  <h2 className="text-xl font-semibold text-gray-900">Possession & Description</h2>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <input
-      type="text"
-      placeholder="Possession Target"
-      value={formData.possession.target}
-      onChange={(e) => setFormData({...formData, possession: {...formData.possession, target: e.target.value}})}
-      className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-      required
-    />
-    <input
-      type="text"
-      placeholder="RERA Possession Date"
-      value={formData.possession.reraPossession}
-      onChange={(e) => setFormData({...formData, possession: {...formData.possession, reraPossession: e.target.value}})}
-      className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-    />
-  </div>
-  <textarea
-    placeholder="About the Property"
-    value={formData.about}
-    onChange={(e) => setFormData({...formData, about: e.target.value})}
-    className="w-full border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-    rows={4}
-  />
-</div>
-
-    {/* Pros & Cons */}
-<div className="space-y-4">
-  <h2 className="text-xl font-semibold text-gray-900">Pros & Cons</h2>
-  
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {/* Pros */}
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">Pros</label>
-      {formData.prosAndCons.pros.map((pro, index) => (
-        <div key={index} className="flex space-x-2">
-          <input
-            type="text"
-            value={pro}
-            onChange={(e) => {
-              const newPros = [...formData.prosAndCons.pros];
-              newPros[index] = e.target.value;
-              setFormData({...formData, prosAndCons: {...formData.prosAndCons, pros: newPros}});
-            }}
-            className="flex-1 border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const newPros = formData.prosAndCons.pros.filter((_, i) => i !== index);
-              setFormData({...formData, prosAndCons: {...formData.prosAndCons, pros: newPros}});
-            }}
-            className="p-2 text-red-600 hover:text-red-800"
-          >
-            <Minus className="h-5 w-5" />
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={() => setFormData({
-          ...formData,
-          prosAndCons: {...formData.prosAndCons, pros: [...formData.prosAndCons.pros, '']}
-        })}
-        className="flex items-center space-x-2 text-maroon-600 hover:text-maroon-800"
-      >
-        <Plus className="h-5 w-5" />
-        <span>Add Pro</span>
-      </button>
+      
+      <ul className="space-y-2">
+        {formData.prosAndCons.pros.map((pro, index) => (
+          <li key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+            <span>{pro}</span>
+            <button
+              onClick={() => handleRemovePro(index)}
+              className="text-red-600 hover:text-red-800"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
 
-    {/* Cons */}
-    <div className="space-y-2">
+    {/* Cons Section */}
+    <div>
       <label className="block text-sm font-medium text-gray-700">Cons</label>
-      {formData.prosAndCons.cons.map((con, index) => (
-        <div key={index} className="flex space-x-2">
-          <input
-            type="text"
-            value={con}
-            onChange={(e) => {
-              const newCons = [...formData.prosAndCons.cons];
-              newCons[index] = e.target.value;
-              setFormData({...formData, prosAndCons: {...formData.prosAndCons, cons: newCons}});
-            }}
-            className="flex-1 border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const newCons = formData.prosAndCons.cons.filter((_, i) => i !== index);
-              setFormData({...formData, prosAndCons: {...formData.prosAndCons, cons: newCons}});
-            }}
-            className="p-2 text-red-600 hover:text-red-800"
-          >
-            <Minus className="h-5 w-5" />
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={() => setFormData({
-          ...formData,
-          prosAndCons: {...formData.prosAndCons, cons: [...formData.prosAndCons.cons, '']}
-        })}
-        className="flex items-center space-x-2 text-maroon-600 hover:text-maroon-800"
-      >
-        <Plus className="h-5 w-5" />
-        <span>Add Con</span>
-      </button>
+      <div className="flex gap-2 mb-4">
+        <input
+          type="text"
+          value={newCon}
+          onChange={(e) => setNewCon(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Add a con"
+        />
+        <button
+          onClick={handleAddCon}
+          className="mt-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+        >
+          Add
+        </button>
+      </div>
+      
+      <ul className="space-y-2">
+        {formData.prosAndCons.cons.map((con, index) => (
+          <li key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+            <span>{con}</span>
+            <button
+              onClick={() => handleRemoveCon(index)}
+              className="text-red-600 hover:text-red-800"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   </div>
-</div>
+      </div>
 
-{/* Amenities */}
-<div className="space-y-4">
-  <h2 className="text-xl font-semibold text-gray-900">Amenities</h2>
+      {/* All Amenities  */}
+
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+  <h3 className="text-xl font-semibold mb-4">Amenities</h3>
   
   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {/* Internal Amenities */}
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">Internal Amenities</label>
-      {formData.internalAmenities.map((amenity, index) => (
-        <div key={index} className="flex space-x-2">
-          <input
-            type="text"
-            value={amenity}
-            onChange={(e) => {
-              const newAmenities = [...formData.internalAmenities];
-              newAmenities[index] = e.target.value;
-              setFormData({...formData, internalAmenities: newAmenities});
-            }}
-            className="flex-1 border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const newAmenities = formData.internalAmenities.filter((_, i) => i !== index);
-              setFormData({...formData, internalAmenities: newAmenities});
-            }}
-            className="p-2 text-red-600 hover:text-red-800"
-          >
-            <Minus className="h-5 w-5" />
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={() => setFormData({...formData, internalAmenities: [...formData.internalAmenities, '']})}
-        className="flex items-center space-x-2 text-maroon-600 hover:text-maroon-800"
-      >
-        <Plus className="h-5 w-5" />
-        <span>Add Internal Amenity</span>
-      </button>
+    {/* Indoor Amenities */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Indoor Amenities</label>
+      <div className="flex gap-2 mb-4">
+        <input
+          type="text"
+          value={newIndoorAmenity}
+          onChange={(e) => setNewIndoorAmenity(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Add indoor amenity"
+        />
+        <button
+          onClick={handleAddIndoorAmenity}
+          className="mt-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+        >
+          Add
+        </button>
+      </div>
+      
+      <ul className="space-y-2">
+        {formData.amenities.indoor.map((amenity, index) => (
+          <li key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+            <span>{amenity}</span>
+            <button
+              onClick={() => handleRemoveIndoorAmenity(index)}
+              className="text-red-600 hover:text-red-800"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
 
-    {/* External Amenities */}
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">External Amenities</label>
-      {formData.externalAmenities.map((amenity, index) => (
-        <div key={index} className="flex space-x-2">
-          <input
-            type="text"
-            value={amenity}
-            onChange={(e) => {
-              const newAmenities = [...formData.externalAmenities];
-              newAmenities[index] = e.target.value;
-              setFormData({...formData, externalAmenities: newAmenities});
-            }}
-            className="flex-1 border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const newAmenities = formData.externalAmenities.filter((_, i) => i !== index);
-              setFormData({...formData, externalAmenities: newAmenities});
-            }}
-            className="p-2 text-red-600 hover:text-red-800"
-          >
-            <Minus className="h-5 w-5" />
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={() => setFormData({...formData, externalAmenities: [...formData.externalAmenities, '']})}
-        className="flex items-center space-x-2 text-maroon-600 hover:text-maroon-800"
-      >
-        <Plus className="h-5 w-5" />
-        <span>Add External Amenity</span>
-      </button>
+    {/* Outdoor Amenities */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Outdoor Amenities</label>
+      <div className="flex gap-2 mb-4">
+        <input
+          type="text"
+          value={newOutdoorAmenity}
+          onChange={(e) => setNewOutdoorAmenity(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Add outdoor amenity"
+        />
+        <button
+          onClick={handleAddOutdoorAmenity}
+          className="mt-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+        >
+          Add
+        </button>
+      </div>
+      
+      <ul className="space-y-2">
+        {formData.amenities.outdoor.map((amenity, index) => (
+          <li key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+            <span>{amenity}</span>
+            <button
+              onClick={() => handleRemoveOutdoorAmenity(index)}
+              className="text-red-600 hover:text-red-800"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   </div>
-</div>
 
-
-
-{/* Media Links & Plans */}
-<div className="space-y-4">
-  <h2 className="text-xl font-semibold text-gray-900">Media & Plans</h2>
-  
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  {/* Amenity Images */}
+  <div className="mt-6">
+    <label className="block text-sm font-medium text-gray-700">Amenity Images</label>
     <input
-      type="text"
-      placeholder="Video Link"
-      value={formData.videoLink}
-      onChange={(e) => setFormData({...formData, videoLink: e.target.value})}
-      className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
+      type="file"
+      accept="image/*"
+      multiple
+      onChange={handleAmenityImagesUpload}
+      className="mt-1 block w-full text-sm text-gray-500
+        file:mr-4 file:py-2 file:px-4
+        file:rounded-md file:border-0
+        file:text-sm file:font-semibold
+        file:bg-indigo-50 file:text-indigo-700
+        hover:file:bg-indigo-100"
     />
     
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">Master Plan Image</label>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          if (e.target.files?.[0]) {
-            setFormData({...formData, masterPlanImage: e.target.files[0]});
-          }
-        }}
-        className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-      />
-    </div>
-
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">Floor Plan Image</label>
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          if (e.target.files?.[0]) {
-            setFormData({...formData, floorPlanImage: e.target.files[0]});
-          }
-        }}
-        className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-      />
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+      {formData.amenities.amenityImages.map((image, index) => (
+        <div key={index} className="relative group">
+          <img
+            src={URL.createObjectURL(image)}
+            alt={`Amenity ${index + 1}`}
+            className="w-full h-32 object-cover rounded-lg"
+          />
+          <button
+            onClick={() => handleRemoveAmenityImage(index)}
+            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full 
+                     opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      ))}
     </div>
   </div>
 </div>
 
-{/* Pricing Details */}
-<div className="space-y-4">
-  <h2 className="text-xl font-semibold text-gray-900">Pricing & Unit Plans</h2>
-  {formData.pricingDetails.map((detail, index) => (
-    <div key={index} className="p-4 border rounded-lg space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <input
-          type="number"
-          placeholder="Carpet Area (sq.ft)"
-          // value={detail.carpetArea}
-          onChange={(e) => {
-            const newDetails = [...formData.pricingDetails];
-            newDetails[index].carpetArea = parseInt(e.target.value);
-            setFormData({...formData, pricingDetails: newDetails});
-          }}
-          className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-        />
-        <input
-          type="number"
-          placeholder="Total Price"
-          // value={detail.totalPrice}
-          onChange={(e) => {
-            const newDetails = [...formData.pricingDetails];
-            newDetails[index].totalPrice = e.target.value;
-            setFormData({...formData, pricingDetails: newDetails});
-          }}
-          className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-        />
-        <input
-          type="number"
-          placeholder="Down Payment"
-          // value={detail.downPayment}
-          onChange={(e) => {
-            const newDetails = [...formData.pricingDetails];
-            newDetails[index].downPayment = parseInt(e.target.value);
-            setFormData({...formData, pricingDetails: newDetails});
-          }}
-          className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-        />
-        <input
-          type="number"
-          placeholder="Parking Unit"
-          // value={detail.parking}
-          onChange={(e) => {
-            const newDetails = [...formData.pricingDetails];
-            newDetails[index].parking = parseInt(e.target.value);
-            setFormData({...formData, pricingDetails: newDetails});
-          }}
-          className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-        />
-      </div>
+     {/* Media and Plans  */}
+
+     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+  <h3 className="text-xl font-semibold mb-4">Media and Plans</h3>
+
+  {/* Video Links Section */}
+  <div className="mb-6">
+    <label className="block text-sm font-medium text-gray-700">Video Links</label>
+    <div className="flex gap-2 mb-4">
+      <input
+        type="text"
+        value={newVideoLink}
+        onChange={(e) => setNewVideoLink(e.target.value)}
+        placeholder="Add video link"
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+      />
       <button
-        type="button"
-        onClick={() => {
-          const newDetails = formData.pricingDetails.filter((_, i) => i !== index);
-          setFormData({...formData, pricingDetails: newDetails});
-        }}
-        className="text-red-600 hover:text-red-800"
+        onClick={handleAddVideoLink}
+        className="mt-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
       >
-        Remove Price Detail
+        Add
       </button>
     </div>
-  ))}
-  <button
-    type="button"
-    onClick={() => setFormData({
-      ...formData,
-      pricingDetails: [...formData.pricingDetails, {
-        carpetArea: 0,
-        totalPrice: 0,
-        downPayment: 0,
-        parking: 0,
-        unitPlanImage: ''
-      }]
-    })}
-    className="flex items-center space-x-2 text-maroon-600 hover:text-maroon-800"
-  >
-    <Plus className="h-5 w-5" />
-    <span>Add Price Detail</span>
-  </button>
-</div>
+    <ul className="space-y-2">
+      {formData.mediaAndPlans.videoLinks.map((link, index) => (
+        <li key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+          <span className="truncate">{link}</span>
+          <button
+            onClick={() => handleRemoveVideoLink(index)}
+            className="text-red-600 hover:text-red-800 ml-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </li>
+      ))}
+    </ul>
+  </div>
 
+  {/* Image Sections */}
+  <div className="space-y-6">
+    {/* Project Layouts */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Project Layout Images</label>
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleProjectLayoutUpload}
+        className="mt-1 block w-full text-sm text-gray-500
+          file:mr-4 file:py-2 file:px-4
+          file:rounded-md file:border-0
+          file:text-sm file:font-semibold
+          file:bg-indigo-50 file:text-indigo-700
+          hover:file:bg-indigo-100"
+      />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+        {formData.mediaAndPlans.projectLayoutsImage.map((image, index) => (
+          <div key={index} className="relative group">
+            <img
+              src={URL.createObjectURL(image)}
+              alt={`Project Layout ${index + 1}`}
+              className="w-full h-32 object-cover rounded-lg"
+            />
+            <button
+              onClick={() => handleRemoveProjectLayout(index)}
+              className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full 
+                       opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
 
+    {/* Floor Layouts */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Floor Layout Images</label>
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFloorLayoutUpload}
+        className="mt-1 block w-full text-sm text-gray-500
+          file:mr-4 file:py-2 file:px-4
+          file:rounded-md file:border-0
+          file:text-sm file:font-semibold
+          file:bg-indigo-50 file:text-indigo-700
+          hover:file:bg-indigo-100"
+      />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+        {formData.mediaAndPlans.floorLayoutsImage.map((image, index) => (
+          <div key={index} className="relative group">
+            <img
+              src={URL.createObjectURL(image)}
+              alt={`Floor Layout ${index + 1}`}
+              className="w-full h-32 object-cover rounded-lg"
+            />
+            <button
+              onClick={() => handleRemoveFloorLayout(index)}
+              className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full 
+                       opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
 
+    {/* Unit Plan Layouts */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Unit Plan Layout Images</label>
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleUnitPlanLayoutUpload}
+        className="mt-1 block w-full text-sm text-gray-500
+          file:mr-4 file:py-2 file:px-4
+          file:rounded-md file:border-0
+          file:text-sm file:font-semibold
+          file:bg-indigo-50 file:text-indigo-700
+          hover:file:bg-indigo-100"
+      />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+        {formData.mediaAndPlans.unitPlanLayoutsImage.map((image, index) => (
+          <div key={index} className="relative group">
+            <img
+              src={URL.createObjectURL(image)}
+              alt={`Unit Plan Layout ${index + 1}`}
+              className="w-full h-32 object-cover rounded-lg"
+            />
+            <button
+              onClick={() => handleRemoveUnitPlanLayout(index)}
+              className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full 
+                       opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
 
-{/* Payment & Offer */}
-<div className="space-y-4">
-  <h2 className="text-xl font-semibold text-gray-900">Payment & Offer Details</h2>
-  
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <textarea
-      placeholder="Payment Scheme"
-      value={formData.paymentScheme}
-      onChange={(e) => setFormData({...formData, paymentScheme: e.target.value})}
-      className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-      rows={3}
-    />
-    <textarea
-      placeholder="Special Offer"
-      value={formData.offer}
-      onChange={(e) => setFormData({...formData, offer: e.target.value})}
-      className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-      rows={3}
-    />
+    {/* Location and Offers  */}
+
   </div>
 </div>
 
-{/* FAQs */}
-<div className="space-y-4">
-  <h2 className="text-xl font-semibold text-gray-900">FAQs</h2>
-  
-  {formData.faqs.map((faq, index) => (
-    <div key={index} className="space-y-2">
-      <div className="flex space-x-2">
-        <input
-          type="text"
-          placeholder="Question"
-          value={faq.question}
-          onChange={(e) => {
-            const newFaqs = [...formData.faqs];
-            newFaqs[index].question = e.target.value;
-            setFormData({...formData, faqs: newFaqs});
-          }}
-          className="flex-1 border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-        />
-        <button
-          type="button"
-          onClick={() => {
-            const newFaqs = formData.faqs.filter((_, i) => i !== index);
-            setFormData({...formData, faqs: newFaqs});
-          }}
-          className="p-2 text-red-600 hover:text-red-800"
-        >
-          <Minus className="h-5 w-5" />
-        </button>
-      </div>
+        {/* Location*/}
+        
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h3 className="text-xl font-semibold mb-4">Location</h3>
+    <div>
       <textarea
-        placeholder="Answer"
-        value={faq.answer}
-        onChange={(e) => {
-          const newFaqs = [...formData.faqs];
-          newFaqs[index].answer = e.target.value;
-          setFormData({...formData, faqs: newFaqs});
-        }}
-        className="w-full border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
-        rows={2}
+        value={formData.location}
+        onChange={handleLocationChange}
+        rows={4}
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+        placeholder="Enter property location details..."
       />
     </div>
-  ))}
-  <button
-    type="button"
-    onClick={() => setFormData({
-      ...formData,
-      faqs: [...formData.faqs, { question: '', answer: '' }]
-    })}
-    className="flex items-center space-x-2 text-maroon-600 hover:text-maroon-800"
-  >
-    <Plus className="h-5 w-5" />
-    <span>Add FAQ</span>
-  </button>
+  </div>
+
+  {/* Offers Section */}
+  <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h3 className="text-xl font-semibold mb-4">Payment and Offers</h3>
+    
+    <div className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Offer Details</label>
+        <textarea
+          value={formData.paymentAndOffers.offerText}
+          onChange={handleOfferTextChange}
+          rows={4}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="Enter offer details..."
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Offer Images</label>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleOfferImagesUpload}
+          className="mt-1 block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-md file:border-0
+            file:text-sm file:font-semibold
+            file:bg-indigo-50 file:text-indigo-700
+            hover:file:bg-indigo-100"
+        />
+        
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+          {formData.paymentAndOffers.offerImages.map((image, index) => (
+            <div key={index} className="relative group">
+              <img
+                src={URL.createObjectURL(image)}
+                alt={`Offer ${index + 1}`}
+                className="w-full h-32 object-cover rounded-lg"
+              />
+              <button
+                onClick={() => handleRemoveOfferImage(index)}
+                className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full 
+                         opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* specifications Section */}
+
+  <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+  <h3 className="text-xl font-semibold mb-4">Specifications</h3>
+  
+  <div>
+    <label className="block text-sm font-medium text-gray-700">Specification Images</label>
+    <input
+      type="file"
+      accept="image/*"
+      multiple
+      onChange={handleSpecificationImagesUpload}
+      className="mt-1 block w-full text-sm text-gray-500
+        file:mr-4 file:py-2 file:px-4
+        file:rounded-md file:border-0
+        file:text-sm file:font-semibold
+        file:bg-indigo-50 file:text-indigo-700
+        hover:file:bg-indigo-100"
+    />
+    
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+      {formData.specifications.specificationImages.map((image, index) => (
+        <div key={index} className="relative group">
+          <img
+            src={URL.createObjectURL(image)}
+            alt={`Specification ${index + 1}`}
+            className="w-full h-32 object-cover rounded-lg"
+          />
+          <button
+            onClick={() => handleRemoveSpecificationImage(index)}
+            className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full 
+                     opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
 </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-maroon-600 text-white px-6 py-2 rounded-lg hover:bg-maroon-700 transition-colors"
-            >
-              Create Property
-            </button>
-          </div>
-        </form>
-      </div>
+      {/* Submit button   */}
+
+      <div className="mt-8 space-y-4">
+  <button
+    type="button" // Changed to button to prevent default form submission
+    onClick={handleSubmit}
+    disabled={isSubmitting}
+    className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300 transition-colors"
+  >
+    {isSubmitting ? (
+      <span className="flex items-center justify-center">
+        <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+        </svg>
+        Submitting...
+      </span>
+    ) : (
+      'Create Property'
+    )}
+  </button>
+
+  {submitSuccess && (
+    <div className="p-4 bg-green-50 text-green-700 rounded-lg border border-green-100">
+      <p className="font-semibold">✓ Property created successfully!</p>
+      <p className="mt-2 text-sm">The property has been added to the database.</p>
+    </div>
+  )}
+
+  {submitError && (
+    <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-100">
+      <p className="font-semibold">⚠️ Submission Error</p>
+      <p className="mt-2 text-sm">{submitError}</p>
+    </div>
+  )}
+</div>
+
+
     </div>
   );
 }
