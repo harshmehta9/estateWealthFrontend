@@ -7,59 +7,64 @@ import axios from 'axios';
 
 interface Property {
   _id: string;
-  name: string;
-  priceRange: { bhk: string; price: number }[];
-  location: { address: string; googleMapLink?: string };
-  images: string[];
-  landParcel: number;
-  towers: number;
-  configurations: { bhk: string; carpetArea: number }[];
-  reraNumbers: string[];
-  possession: { target: string; reraPossession?: string };
-  about: string;
-  prosAndCons: { pros: string[]; cons: string[] };
-  videoLink?: string;
-  internalAmenities: string[];
-  externalAmenities: string[];
-  masterPlanImage?: string;
-  floorPlanImage?: string;
-  pricingDetails: {
-    carpetArea: number;
-    totalPrice: number;
-    downPayment: number;
-    parking: number;
-    unitPlanImage: string;
-  }[];
-  paymentScheme?: string;
-  offer?: string;
-  faqs: { question: string; answer: string }[];
+  basicInfo: {
+    propertyName: string;
+    propertyAddress: string;
+    locality: string;
+  };
+  configuration: {
+    configurations: Array<{
+      bhkType: string;
+      price: {
+        value: number | null;
+        unit: string;
+      };
+      area: {
+        value: number | null;
+        unit: string;
+      };
+      bookingAmount: {
+        value: number | null;
+        unit: string;
+      };
+      parking: string;
+      _id: string;
+    }>;
+    googleMapLink: string;
+    aboutProperty: string;
+    aboutBuilder: string;
+  };
+  propertyImages: string[];
 }
-
 
 export default function PropertyManagement() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [selectedConfiguration, setSelectedConfiguration] = useState('');
-  // const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch data from the backend
+    setIsLoading(true);
     axios.get(`${import.meta.env.VITE_API_URL}/properties/getAllProperties`)
       .then(response => {
-        console.dir('Fetched properties:', response.data.properties);
         setProperties(response.data.properties);
+        setIsLoading(false);
       })
       .catch(error => {
         console.error('Error fetching properties:', error);
+        setIsLoading(false);
       });
   }, []);
 
-  const filteredProperties = properties.filter(property =>
-    property.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-
+  const filteredProperties = properties.filter(property => {
+    const matchesSearch = property.basicInfo.propertyName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesLocation = selectedLocation ? 
+      property.basicInfo.locality === selectedLocation : true;
+    const matchesConfiguration = selectedConfiguration ? 
+      property.configuration.configurations.some(c => c.bhkType === selectedConfiguration) : true;
+    return matchesSearch && matchesLocation && matchesConfiguration;
+  });
 
   return (
     <div className="p-6">
@@ -74,13 +79,22 @@ export default function PropertyManagement() {
         </Link>
       </div>
 
-      <PropertySearch searchQuery={searchQuery}
+      <PropertySearch 
+        searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         selectedLocation={selectedLocation}
         setSelectedLocation={setSelectedLocation}
         selectedConfiguration={selectedConfiguration}
-        setSelectedConfiguration={setSelectedConfiguration} />
-      <PropertyList properties={filteredProperties} />
+        setSelectedConfiguration={setSelectedConfiguration} 
+      />
+      
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      ) : (
+        <PropertyList properties={filteredProperties} />
+      )}
     </div>
   );
 }

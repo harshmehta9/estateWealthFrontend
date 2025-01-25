@@ -5,16 +5,19 @@ interface PropertySearchProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   selectedLocation: string;
-
   setSelectedLocation: React.Dispatch<React.SetStateAction<string>>;
-
   selectedConfiguration: string;
-
   setSelectedConfiguration: React.Dispatch<React.SetStateAction<string>>;
-
 }
 
-export default function PropertySearch({ searchQuery, setSearchQuery, selectedLocation, setSelectedLocation, selectedConfiguration, setSelectedConfiguration }: PropertySearchProps) {
+export default function PropertySearch({ 
+  searchQuery, 
+  setSearchQuery,
+  selectedLocation,
+  setSelectedLocation,
+  selectedConfiguration,
+  setSelectedConfiguration 
+}: PropertySearchProps) {
   return (
     <div className="bg-white p-4 rounded-lg shadow mb-6">
       <div className="flex gap-4">
@@ -36,9 +39,9 @@ export default function PropertySearch({ searchQuery, setSearchQuery, selectedLo
           className="border rounded-lg px-4 py-2 focus:ring-maroon-500 focus:border-maroon-500"
         >
           <option value="">All Locations</option>
-          <option value="Baner">Baner</option>
-          <option value="Hinjewadi">Hinjewadi</option>
-          <option value="Wakad">Wakad</option>
+          <option value="asdfkljasklf">asdfkljasklf</option>
+          <option value="sdfasdfsadf">sdfasdfsadf</option>
+          {/* Add more locations as needed */}
         </select>
         <select
           value={selectedConfiguration}

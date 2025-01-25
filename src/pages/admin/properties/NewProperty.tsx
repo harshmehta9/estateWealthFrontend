@@ -1,10 +1,17 @@
 export interface PropertyForm {
+  basicInfo: {
+    propertyName: string;
+    propertyAddress: string;
+    locality: string;
+  };
   configuration: {
-    bhkType: string;
-    area: { value: number | null; unit: string }; // Changed to number | null
-    price: { value: number | null; unit: string };
-    bookingAmount: { value: number | null; unit: string };
-    parking: string;
+    configurations: {
+      bhkType: string;
+      area: { value: number | null; unit: string };
+      price: { value: number | null; unit: string };
+      bookingAmount: { value: number | null; unit: string };
+      parking: string;
+    }[];
     googleMapLink: string;
     aboutProperty: string;
     aboutBuilder: string;
@@ -55,12 +62,19 @@ const [submitError, setSubmitError] = useState('');
 const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const [formData, setFormData] = useState<PropertyForm>({
+    basicInfo: {
+      propertyName: '',
+      propertyAddress: '',
+      locality: ''
+    },
     configuration: {
-      bhkType: '',
-      area: { value: null, unit: 'sq ft' }, // Initialize with null
-      price: { value: null, unit: 'Cr' },
-      bookingAmount: { value: null, unit: 'Lac' },
-      parking: '',
+      configurations: [{
+        bhkType: '',
+        area: { value: null, unit: 'sq ft' },
+        price: { value: null, unit: 'Cr' },
+        bookingAmount: { value: null, unit: 'Lac' },
+        parking: '',
+      }],
       googleMapLink: '',
       aboutProperty: '',
       aboutBuilder: ''
@@ -143,32 +157,7 @@ const [submitSuccess, setSubmitSuccess] = useState(false);
       }
     };
 
-  const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-  const { name, value } = e.target;
-  if (name.includes('.')) {
-    const [parent, child] = name.split('.');
-    setFormData(prev => ({
-      ...prev,
-      configuration: {
-        ...prev.configuration,
-        [parent]: {
-          ...prev.configuration[parent as keyof typeof prev.configuration],
-          [child]: child === 'value' 
-            ? (value === '' ? undefined : Number(value)) // Set undefined if empty
-            : value
-        }
-      }
-    }));
-  } else {
-    setFormData(prev => ({
-      ...prev,
-      configuration: {
-        ...prev.configuration,
-        [name]: value
-      }
-    }));
-  }
-};
+  
   const handleAddPro = () => {
     if (newPro.trim()) {
       setFormData(prev => ({
@@ -438,6 +427,89 @@ const handleRemoveSpecificationImage = (index: number) => {
   }));
 };
 
+const addConfiguration = () => {
+  setFormData(prev => ({
+    ...prev,
+    configuration: {
+      ...prev.configuration,
+      configurations: [
+        ...prev.configuration.configurations,
+        {
+          bhkType: '',
+          area: { value: null, unit: 'sq ft' },
+          price: { value: null, unit: 'Cr' },
+          bookingAmount: { value: null, unit: 'Lac' },
+          parking: '',
+        }
+      ]
+    }
+  }));
+};
+
+const removeConfiguration = (index: number) => {
+  setFormData(prev => ({
+    ...prev,
+    configuration: {
+      ...prev.configuration,
+      configurations: prev.configuration.configurations.filter((_, i) => i !== index)
+    }
+  }));
+};
+
+const handleConfigChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  index: number
+) => {
+  const { name, value } = e.target;
+  
+  if (name.includes('.')) {
+    const [parent, child] = name.split('.');
+    setFormData(prev => {
+      const newConfigs = [...prev.configuration.configurations];
+      newConfigs[index] = {
+        ...newConfigs[index],
+        [parent]: {
+          ...newConfigs[index][parent as keyof typeof newConfigs[typeof index]],
+          [child]: child === 'value' ? (value === '' ? null : Number(value)) : value
+        }
+      };
+      return {
+        ...prev,
+        configuration: {
+          ...prev.configuration,
+          configurations: newConfigs
+        }
+      };
+    });
+  } else {
+    setFormData(prev => {
+      const newConfigs = [...prev.configuration.configurations];
+      newConfigs[index] = {
+        ...newConfigs[index],
+        [name]: value
+      };
+      return {
+        ...prev,
+        configuration: {
+          ...prev.configuration,
+          configurations: newConfigs
+        }
+      };
+    });
+  }
+};
+
+const handleBasicInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const { name, value } = e.target;
+  setFormData(prev => ({
+    ...prev,
+    basicInfo: {
+      ...prev.basicInfo,
+      [name]: value
+    }
+  }));
+};
+
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setIsSubmitting(true);
@@ -458,6 +530,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     // Append JSON data with proper structure
     formPayload.append('data', JSON.stringify({
+      basicInfo: formData.basicInfo,
       configuration: formData.configuration,
       propertyDetails: formData.propertyDetails,
       possession: formData.possession,
@@ -502,138 +575,235 @@ const handleSubmit = async (e: React.FormEvent) => {
   return (
 
     
+
+    
     <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6">Add New Property</h2>
+
+      {/* Basic Info Section */}
+<div className="bg-white rounded-lg shadow-md p-6 mb-6">
+  <h3 className="text-xl font-semibold mb-4">Basic Information</h3>
+  <div className="grid grid-cols-1 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Property Name</label>
+      <input
+        type="text"
+        name="propertyName"
+        value={formData.basicInfo.propertyName}
+        onChange={handleBasicInfoChange}
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+      />
+    </div>
+    
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Property Address</label>
+      <textarea
+        name="propertyAddress"
+        value={formData.basicInfo.propertyAddress}
+        onChange={handleBasicInfoChange}
+        rows={3}
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+      />
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-gray-700">Locality</label>
+      <input
+        type="text"
+        name="locality"
+        value={formData.basicInfo.locality}
+        onChange={handleBasicInfoChange}
+        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+      />
+    </div>
+  </div>
+</div>
       {/* //Configuration */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 className="text-xl font-semibold mb-4">Configuration</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* BHK Type: */}
-        <div>
-        <label className="block text-sm font-medium text-gray-700">BHK Type</label>
-        <select
-          name="bhkType"
-          value={formData.configuration.bhkType}
-          onChange={handleConfigChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-        >
-          <option value="">Select BHK Type</option>
-          {[1, 2, 3, 4, 5].map((num) => (
-            <option key={num} value={`${num} BHK`}>
-              {num} BHK
-            </option>
-          ))}
-        </select>
-        </div>
-
-          {/* Area  */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Area</label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                name="area.value"
-                value={formData.configuration.area.value ?? ''}
-                onChange={handleConfigChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-              <input
-                type="text"
-                name="area.unit"
-                value={formData.configuration.area.unit}
-                onChange={handleConfigChange}
-                className="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-
-          {/* Price */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Price</label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                name="price.value"
-                value={formData.configuration.price.value ?? ''}
-                onChange={handleConfigChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-              <input
-                type="text"
-                name="price.unit"
-                value={formData.configuration.price.unit}
-                onChange={handleConfigChange}
-                className="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Booking Amount</label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                name="bookingAmount.value"
-                value={formData.configuration.bookingAmount.value ?? ''}
-                onChange={handleConfigChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-              <input
-                type="text"
-                name="bookingAmount.unit"
-                value={formData.configuration.bookingAmount.unit}
-                onChange={handleConfigChange}
-                className="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Parking</label>
-            <input
-              type="text"
-              name="parking"
-              value={formData.configuration.parking}
-              onChange={handleConfigChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Google Map Link</label>
-            <input
-              type="text"
-              name="googleMapLink"
-              value={formData.configuration.googleMapLink}
-              onChange={handleConfigChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            />
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700">About Property</label>
-          <textarea
-            name="aboutProperty"
-            value={formData.configuration.aboutProperty}
-            onChange={handleConfigChange}
-            rows={4}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700">About Builder</label>
-          <textarea
-            name="aboutBuilder"
-            value={formData.configuration.aboutBuilder}
-            onChange={handleConfigChange}
-            rows={4}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          />
-        </div>
+  <h3 className="text-xl font-semibold mb-4">Configuration</h3>
+  
+  {formData.configuration.configurations.map((config, index) => (
+    <div key={index} className="mb-6 border-b pb-6 last:border-b-0">
+      <div className="flex justify-between items-center mb-4">
+        <h4 className="font-medium">Configuration {index + 1}</h4>
+        {formData.configuration.configurations.length > 1 && (
+          <button
+            type="button"
+            onClick={() => removeConfiguration(index)}
+            className="text-red-600 hover:text-red-800 text-sm"
+          >
+            Remove
+          </button>
+        )}
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* BHK Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">BHK Type</label>
+          <select
+            name="bhkType"
+            value={config.bhkType}
+            onChange={(e) => handleConfigChange(e, index)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          >
+            <option value="">Select BHK Type</option>
+            {[1, 2, 3, 4, 5].map((num) => (
+              <option key={num} value={`${num} BHK`}>
+                {num} BHK
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Other fields (area, price, booking amount, parking) */}
+        {/* Update each input's name and onChange handler similarly */}
+        {/* Example for area: */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Area</label>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              name="area.value"
+              value={config.area.value ?? ''}
+              onChange={(e) => handleConfigChange(e, index)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+            <input
+              type="text"
+              name="area.unit"
+              value={config.area.unit}
+              onChange={(e) => handleConfigChange(e, index)}
+              className="mt-1 block w-32 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+{/* Price */}
+<div>
+  <label className="block text-sm font-medium text-gray-700">Price</label>
+  <div className="flex gap-2">
+    <input
+      type="number"
+      name="price.value"
+      value={config.price.value ?? ''}
+      onChange={(e) => handleConfigChange(e, index)}
+      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+    />
+    <select
+      name="price.unit"
+      value={config.price.unit}
+      onChange={(e) => handleConfigChange(e, index)}
+      >
+      <option value="Cr">Cr</option>
+      <option value="Lac">Lac</option>
+    </select>
+  </div>
+</div>
+
+{/* Booking Amount */}
+<div>
+  <label className="block text-sm font-medium text-gray-700">Booking Amount</label>
+  <div className="flex gap-2">
+    <input
+      type="number"
+      name="bookingAmount.value"
+      value={config.bookingAmount.value ?? ''}
+      onChange={(e) => handleConfigChange(e, index)}
+      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+    />
+    <select
+  name="bookingAmount.unit"
+  value={config.bookingAmount.unit}
+  onChange={(e) => handleConfigChange(e, index)}
+  >
+  <option value="Lac">Lac</option>
+  <option value="Cr">Cr</option>
+  </select>
+  </div>
+</div>
+
+{/* Parking */}
+<div>
+  <label className="block text-sm font-medium text-gray-700">Parking</label>
+  <select
+    name="parking"
+    value={config.parking}
+    onChange={(e) => handleConfigChange(e, index)}
+    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+  >
+    <option value="">Select Parking</option>
+    <option value="Available">Available</option>
+    <option value="Not Available">Not Available</option>
+    <option value="Limited">Limited</option>
+  </select>
+</div>
+      </div>
+    </div>
+  ))}
+
+  <button
+    type="button"
+    onClick={addConfiguration}
+    className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+  >
+    + Add Configuration
+  </button>
+
+  {/* Keep the existing googleMapLink, aboutProperty, and aboutBuilder fields */}
+  <div className="mt-6">
+    <label className="block text-sm font-medium text-gray-700">Google Map Link</label>
+    <input
+      type="text"
+      name="googleMapLink"
+      value={formData.configuration.googleMapLink}
+      onChange={(e) => setFormData(prev => ({
+        ...prev,
+        configuration: {
+          ...prev.configuration,
+          googleMapLink: e.target.value
+        }
+      }))}
+      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+    />
+  </div>
+
+  <div className="mt-6">
+    <label className="block text-sm font-medium text-gray-700">About Property</label>
+    <input
+      type="text"
+      name="aboutProperty"
+      value={formData.configuration.aboutProperty}
+      onChange={(e) => setFormData(prev => ({
+        ...prev,
+        configuration: {
+          ...prev.configuration,
+          aboutProperty: e.target.value
+        }
+      }))}
+      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+    />
+  </div>
+
+  <div className="mt-6">
+    <label className="block text-sm font-medium text-gray-700">About Builder</label>
+    <input
+      type="text"
+      name="aboutBuilder"
+      value={formData.configuration.aboutBuilder}
+      onChange={(e) => setFormData(prev => ({
+        ...prev,
+        configuration: {
+          ...prev.configuration,
+          aboutBuilder: e.target.value
+        }
+      }))}
+      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+    />
+  </div>
+
+  {/* Similar changes for aboutProperty and aboutBuilder */}
+</div>
 
       {/* Property Image */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">

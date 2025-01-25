@@ -1,25 +1,22 @@
-
 import { Edit, Trash2, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Property {
   _id: string;
-  name: string;
-  images: string[];
-  location: {
-    address: string;
+  basicInfo: {
+    propertyName: string;
+    locality: string;
   };
-  priceRange: {
-    bhk: string;
-    price: number;
-  }[];
-  possession: {
-    target: string;
+  configuration: {
+    configurations: Array<{
+      bhkType: string;
+      price: {
+        value: number | null;
+        unit: string;
+      };
+    }>;
   };
-  configurations: {
-    bhk: string;
-  }[];
-  // other fields
+  propertyImages: string[];
 }
 
 interface PropertyListProps {
@@ -45,9 +42,6 @@ export default function PropertyList({ properties }: PropertyListProps) {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Configurations
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Possession
-              </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -59,32 +53,33 @@ export default function PropertyList({ properties }: PropertyListProps) {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <img
-                      src={property.images[0]}
-                      alt={property.name}
+                      src={property.propertyImages?.[0] || '/placeholder-property.jpg'}
+                      alt={property.basicInfo.propertyName}
                       className="h-10 w-10 rounded-lg object-cover"
                     />
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">
-                        {property.name}
+                        {property.basicInfo.propertyName}
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{property.location.address}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {property.priceRange.map(p => `${p.bhk}: ₹${p.price}Cr`).join(', ')}
+                    {property.basicInfo.locality}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {property.configurations.map(c => `${c.bhk}`).join(', ')}
+                    {property.configuration.configurations.map(c => 
+                      `${c.bhkType}: ${c.price.value ? '₹' + c.price.value : 'N/A'}${c.price.unit}`
+                    ).join(', ')}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{property.possession.target}</div>
+                  <div className="text-sm text-gray-900">
+                    {property.configuration.configurations.map(c => c.bhkType).join(', ')}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex justify-end space-x-2">
@@ -101,11 +96,11 @@ export default function PropertyList({ properties }: PropertyListProps) {
                       onClick={async () => {
                         if (window.confirm('Are you sure you want to delete this property?')) {
                           try {
-                            const response = await fetch(`http://0/admin/deleteproperty/${property._id}`, {
-                              method: 'DELETE',
-                            });
+                            const response = await fetch(
+                              `${import.meta.env.VITE_API_URL}/admin/deleteproperty/${property._id}`, 
+                              { method: 'DELETE' }
+                            );
                             if (response.ok) {
-                              // Refresh the page or update the UI
                               window.location.reload();
                             } else {
                               alert('Failed to delete property');
